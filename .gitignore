@@ -1,0 +1,43 @@
+# IDE
+.idea/*
+*.iml
+.vscode/
+
+# Python
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# macOS / Windows
+**/.DS_Store
+Thumbs.db
+
+# Algorithm weights & local experiment data
+DEAL/checkpoint/
+DEAL/Ir_50/
+DEAL/test_result/
+_m3fd_tmp/
+**/M3FD/
+*.pt
+*.pth
+*.ckpt
+*.zip
+*.zip*.part
+*.part
+
+# Training outputs
+train_logs/
+wandb/
+
+# Web runtime
+backend/uploads/
+backend/results/
+frontend/node_modules/
+frontend/dist/
+
+# Build / packaging
+build/
+dist/
+*.spec.bak
