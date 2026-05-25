@@ -1,7 +1,9 @@
 # IDE
-.idea/*
-*.iml
+.idea/
 .vscode/
+.cursor/
+.trae/
+*.iml
 
 # Python
 **/__pycache__/
@@ -36,6 +38,9 @@ backend/uploads/
 backend/results/
 frontend/node_modules/
 frontend/dist/
+
+# Node (repo root — do not commit dependencies)
+node_modules/
 
 # Build / packaging
 build/

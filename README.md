@@ -7,27 +7,38 @@ Zhu Liu†, Zijun Wang†, Jinyuan Liu‡, Fanqi Meng†, Long Ma†, Risheng Li
 
 ---
 
-## Attribution & This Repository
+## Attribution & Copyright
 
-**Original algorithm and publication (CVPR 2025)**  
-The DEAL method, training code, network design, and experimental claims belong to the authors above. The official implementation is maintained at **[LiuZhu-CV/DEAL](https://github.com/LiuZhu-CV/DEAL)**. Please cite the original paper when using the method in research (see [Citation](#smiley-citation)).
+**Original authors (CVPR 2025)**  
+The DEAL **method**, **paper**, **training/inference code**, **network architecture**, **experimental results**, and **pretrained weights** are the intellectual property of Zhu Liu, Zijun Wang, Jinyuan Liu, Fanqi Meng, Long Ma, Risheng Liu, and their affiliations. The **official** open-source release is:
 
-**This repository ([NorthBridgeAthlon64/DEAL](https://github.com/NorthBridgeAthlon64/DEAL))**  
-A community fork for local deployment and demonstration. It **does not** replace or represent the authors’ official release. Core model code under `DEAL/` is derived from the upstream project; extensions below are additional engineering work on this fork only:
+**[https://github.com/LiuZhu-CV/DEAL](https://github.com/LiuZhu-CV/DEAL)**
 
-| Component | Description |
-|-----------|-------------|
-| `backend/` | Flask API wrapping infrared enhancement (`inference.py`, `app.py`) |
-| `frontend/` | Vue 3 + Vite UI for upload, preview, and download |
-| `scripts/` | Windows launch scripts for backend and frontend |
-| `.gitignore` | Ignore checkpoints, datasets, and runtime upload/result dirs |
-| README (Web Demo) | Usage docs for the web stack |
+When you use the algorithm or report results, please **cite the original CVPR 2025 paper** (see [Citation](#smiley-citation)) and follow the license and usage terms of the upstream repository.
+
+**This fork ([NorthBridgeAthlon64/DEAL](https://github.com/NorthBridgeAthlon64/DEAL))**  
+This repository is a **derivative community fork** built **on top of** the authors’ open-source DEAL project. It is intended only for **local deployment and browser demonstration**. It:
+
+- **Does not** represent the official release, authors, or Dalian University of Technology.
+- **Does not** modify or replace the scientific claims of the original paper.
+- Keeps core model code under `DEAL/` aligned with the upstream implementation; adds optional tooling listed below.
+
+| Added in this fork only | Description |
+|-------------------------|-------------|
+| `backend/` | Flask API for upload → enhance → download |
+| `frontend/` | Vue 3 + Vite web UI (metrics display, in-site paper viewer) |
+| `scripts/` | Windows helper scripts to start backend / frontend |
+| `.gitignore` | Excludes checkpoints, datasets, `node_modules`, runtime uploads |
+
+**What you must respect when using this fork**
+
+1. **Retain attribution** — Do not remove author names, the upstream link, or citation guidance from this README when redistributing.
+2. **Prefer the official repo** for research reproduction, training, and citing the method; use this fork mainly for the Web demo workflow.
+3. **Weights & data** — Download pretrained models and datasets only via the authors’ Baidu Netdisk links in [Test](#inference); they are **not** redistributed here.
+4. **Web demo is extra tooling** — The Vue/Flask layer is **not** part of the published DEAL method; do not cite the web UI as the paper’s official code.
 
 **Acknowledgement**  
-We thank the DEAL authors for open-sourcing their work. If you find the method useful, please star the [official repository](https://github.com/LiuZhu-CV/DEAL) and cite the CVPR 2025 paper.
-
-**Disclaimer**  
-Pretrained weights and datasets are distributed via the authors’ links (e.g. Baidu Netdisk in the sections below), not bundled in this repo. Use them only in accordance with the original project’s terms and applicable licenses.
+We sincerely thank the DEAL authors for open-sourcing their work. If the method helps your research, please **star and cite the [official repository](https://github.com/LiuZhu-CV/DEAL)**.
 
 ---
 
@@ -35,7 +46,7 @@ Pretrained weights and datasets are distributed via the authors’ links (e.g. B
 
 ## :book: Table Of Contents
 
-- [Attribution & This Repository](#attribution--this-repository)
+- [Attribution & Copyright](#attribution--copyright)
 - [TODO](#todo)
 - [Abstract](#abstract)
 - [Framework Overview](#framework_overview)
@@ -125,51 +136,136 @@ python LoadOurs.py
 
 ## <a name="web-demo"></a> Web Demo
 
-Browser-based infrared enhancement (Vue 3 + Flask), aligned with [TarDAL-Poss](https://github.com/JinyuanLiu-CV/TarDAL) layout.
+Browser-based infrared enhancement (Vue 3 + Flask). UI layout references [TarDAL-Poss](https://github.com/JinyuanLiu-CV/TarDAL); **model inference still uses the original DEAL code and weights** under `DEAL/`.
 
 ### Prerequisites
 
-1. Conda environment with PyTorch + CUDA (e.g. `conda activate TarDAL`)
-2. Pretrained weights at `DEAL/checkpoint/epoch_839_res_model.pt` ([Baidu Netdisk](https://pan.baidu.com/s/1XW1zbj0FKdUTefi7fjiXKg?pwd=kiuy))
-3. Node.js 18+ for the frontend
+| Item | Requirement |
+|------|-------------|
+| Python | Conda env with PyTorch + CUDA (e.g. `conda env create -f environment.yaml` then `conda activate TarDAL`) |
+| Weights | Place `epoch_839_res_model.pt` at `DEAL/checkpoint/epoch_839_res_model.pt` ([Baidu Netdisk](https://pan.baidu.com/s/1XW1zbj0FKdUTefi7fjiXKg?pwd=kiuy)) |
+| Node.js | 18+ for the frontend (`npm` in `frontend/`) |
+| Ports | Backend **5000**, frontend dev server **5173** (both must be free) |
 
-### Start (development)
-
-**Terminal 1 — backend**
-
-```bash
-scripts/start-backend.bat
-# or: cd backend && python app.py
-```
-
-**Terminal 2 — frontend**
+Clone this fork:
 
 ```bash
-scripts/start-frontend.bat
-# or: cd frontend && npm install && npm run dev
+git clone https://github.com/NorthBridgeAthlon64/DEAL.git
+cd DEAL
 ```
 
-Open: `http://127.0.0.1:5173/DEAL/`
+### Quick start (two terminals)
 
-### API
+You need **both** backend and frontend running. The UI talks to `http://127.0.0.1:5000` for inference.
+
+**Terminal 1 — start backend (Flask + DEAL model)**
+
+Windows (double-click or PowerShell):
+
+```bat
+scripts\start-backend.bat
+```
+
+Manual:
+
+```powershell
+conda activate TarDAL
+cd backend
+pip install -r requirements.txt
+python app.py
+```
+
+Linux / macOS:
+
+```bash
+conda activate TarDAL
+cd backend
+pip install -r requirements.txt
+python app.py
+```
+
+Wait until you see the server listening on port **5000**. Check: [http://127.0.0.1:5000/api/health](http://127.0.0.1:5000/api/health) should return OK and `model_loaded: true` after weights are in place.
+
+**Terminal 2 — start frontend (Vite dev server)**
+
+Windows:
+
+```bat
+scripts\start-frontend.bat
+```
+
+Manual:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Linux / macOS:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+**Open in browser**
+
+- Home: [http://127.0.0.1:5173/DEAL/](http://127.0.0.1:5173/DEAL/) or [http://localhost:5173/DEAL/#/](http://localhost:5173/DEAL/#/)
+- Go to **个人应用** → upload an infrared image → **开始增强** → view metrics and download the result.
+
+### 快速启动（中文）
+
+1. 从 [官方仓库](https://github.com/LiuZhu-CV/DEAL) 或本 fork 获取代码；**算法版权与引用请以原作者为准**（见上文 [Attribution & Copyright](#attribution--copyright)）。
+2. 按 [Setup](#setup) 配置 Conda 环境，并按 [Test](#inference) 下载权重到 `DEAL/checkpoint/epoch_839_res_model.pt`。
+3. **终端 1（后端）**：`scripts\start-backend.bat` 或 `cd backend && python app.py`（需先 `conda activate TarDAL`）。
+4. **终端 2（前端）**：`scripts\start-frontend.bat` 或 `cd frontend && npm install && npm run dev`。
+5. 浏览器打开 `http://127.0.0.1:5173/DEAL/`，在「个人应用」页上传红外图并增强。
+
+### Troubleshooting
+
+| Symptom | What to check |
+|---------|----------------|
+| Metrics show `—` | Backend not running, or enhancement not finished — start Terminal 1 and click **开始增强** |
+| `model_loaded: false` | Missing `DEAL/checkpoint/epoch_839_res_model.pt` |
+| Blank page | Use URL with `/DEAL/` base path; hard-refresh after `npm run dev` |
+| Port in use | Stop old `python app.py` on 5000 or change `PORT` env var |
+
+### API (backend `:5000`)
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/health` | Health check |
+| GET | `/api/health` | Health check + model load status |
 | POST | `/api/upload` | Form field `ir_image` |
-| POST | `/api/process` | JSON `{ "session_id": "..." }` |
+| POST | `/api/process` | JSON `{ "session_id": "..." }` → returns `metrics` |
 | GET | `/api/result/<filename>` | Enhanced PNG |
 | DELETE | `/api/cleanup/<session_id>` | Remove session files |
 
 ### Production (single port)
 
+Build the frontend, then let Flask serve static files:
+
 ```bash
 cd frontend && npm run build
+```
+
+Windows:
+
+```bat
 set DEAL_SERVE_FRONTEND=1
+cd ..\backend
+python app.py
+```
+
+Linux / macOS:
+
+```bash
+export DEAL_SERVE_FRONTEND=1
 cd ../backend && python app.py
 ```
 
-Visit: `http://127.0.0.1:5000/DEAL/`
+Visit: [http://127.0.0.1:5000/DEAL/](http://127.0.0.1:5000/DEAL/)
 
 ## :smiley: Citation
 
