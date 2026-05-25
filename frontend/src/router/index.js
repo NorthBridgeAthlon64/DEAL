@@ -4,8 +4,11 @@ import Personal from '../pages/Personal.vue';
 import Commercial from '../pages/Commercial.vue';
 import National from '../pages/National.vue';
 
+import Paper from '../pages/Paper.vue';
+
 const routes = [
   { path: '/', name: 'home', component: Home, meta: { title: '首页 | DEAL' } },
+  { path: '/paper', name: 'paper', component: Paper, meta: { title: '阅读论文 | DEAL' } },
   { path: '/personal', name: 'personal', component: Personal, meta: { title: '个人应用 | DEAL' } },
   {
     path: '/commercial',
@@ -17,7 +20,7 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes,
 });
 

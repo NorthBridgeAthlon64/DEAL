@@ -2,6 +2,7 @@
 import { shallowRef } from 'vue';
 import { RouterLink, RouterView } from 'vue-router';
 import { Menu, Moon, Sun, X } from 'lucide-vue-next';
+import { REPO_ISSUES_URL, REPO_URL } from './constants/links';
 import { useTheme } from './composables/useTheme';
 
 const menuOpen = shallowRef(false);
@@ -25,6 +26,7 @@ function closeMenu() {
           <RouterLink class="nav-link" to="/personal">个人</RouterLink>
           <RouterLink class="nav-link" to="/commercial">商业</RouterLink>
           <RouterLink class="nav-link" to="/national">国家</RouterLink>
+          <RouterLink class="nav-link" to="/paper">论文</RouterLink>
         </nav>
         <div class="nav-actions">
           <button class="btn btn-ghost btn-sm" type="button" @click="toggleTheme">
@@ -59,27 +61,15 @@ function closeMenu() {
         </div>
         <div class="footer-col">
           <div class="footer-title">资源</div>
-          <a class="footer-link" href="https://github.com/LiuZhu-CV/DEAL" target="_blank" rel="noreferrer">
-            论文(CVPR 2025)
-          </a>
-          <a class="footer-link" href="https://github.com/LiuZhu-CV/DEAL" target="_blank" rel="noreferrer">
-            官方仓库
-          </a>
-          <a class="footer-link" href="https://github.com/LiuZhu-CV/DEAL" target="_blank" rel="noreferrer">
-            Web Demo
-          </a>
-          <a class="footer-link" href="https://github.com/LiuZhu-CV/DEAL" target="_blank" rel="noreferrer">
-            API 文档
-          </a>
+          <RouterLink class="footer-link" to="/paper">论文 (CVPR 2025)</RouterLink>
+          <a class="footer-link" :href="REPO_URL" target="_blank" rel="noreferrer">项目仓库</a>
+          <a class="footer-link" :href="REPO_URL + '#web-demo'" target="_blank" rel="noreferrer">Web Demo</a>
+          <a class="footer-link" :href="REPO_URL + '#web-demo'" target="_blank" rel="noreferrer">API 文档</a>
         </div>
         <div class="footer-col">
           <div class="footer-title">联系</div>
-          <a class="footer-link" href="https://github.com/LiuZhu-CV/DEAL/issues" target="_blank" rel="noreferrer">
-            GitHub Issues
-          </a>
-          <a class="footer-link" href="https://www.dlut.edu.cn" target="_blank" rel="noreferrer">
-            大连理工大学
-          </a>
+          <a class="footer-link" :href="REPO_ISSUES_URL" target="_blank" rel="noreferrer">GitHub Issues</a>
+          <a class="footer-link" :href="REPO_URL" target="_blank" rel="noreferrer">GitHub Repositories</a>
         </div>
       </div>
       <div class="container footer-bottom">
@@ -99,6 +89,7 @@ function closeMenu() {
         <RouterLink class="mobile-link" to="/personal" @click="closeMenu">个人</RouterLink>
         <RouterLink class="mobile-link" to="/commercial" @click="closeMenu">商业</RouterLink>
         <RouterLink class="mobile-link" to="/national" @click="closeMenu">国家</RouterLink>
+        <RouterLink class="mobile-link" to="/paper" @click="closeMenu">论文</RouterLink>
       </div>
     </div>
   </div>

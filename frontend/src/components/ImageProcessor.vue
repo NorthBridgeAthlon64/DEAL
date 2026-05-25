@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, reactive, shallowRef } from 'vue';
 import { Image, Loader2, UploadCloud } from 'lucide-vue-next';
+import { evaluateImageDataPair, formatBackendMetrics } from '../utils/metrics';
 
 const API_BASE =
   import.meta.env.VITE_API_BASE ?? (import.meta.env.DEV ? 'http://localhost:5000' : '');
@@ -21,9 +22,40 @@ const warningMessage = shallowRef('');
 const metrics = reactive({
   psnr: null,
   ssim: null,
-  detection: null,
+  improvement: null,
   time: null,
 });
+
+const metricGuides = [
+  {
+    title: '峰值信噪比 PSNR',
+    role: '衡量增强结果与输入图在像素层面的接近程度。',
+    paper:
+      '论文在条纹噪声去除、超分辨率等任务中，采用 PSNR 作为有参考（Ground Truth）客观评价指标；数值越高通常表示重建越接近清晰真值。',
+    demo: '本演示无 GT，因此计算「增强图相对输入图」的 PSNR，用于观察增强前后像素变化幅度。',
+  },
+  {
+    title: '结构相似性 SSIM',
+    role: '衡量两幅图像在亮度、对比度与结构上的相似程度。',
+    paper:
+      'DEAL 训练目标包含 SSIM 损失（L1 + SSIM），论文实验表格亦以 SSIM 评估视觉结构保真；数值越接近 1，结构越相似。',
+    demo: '本演示计算输入图与增强图之间的 SSIM，反映增强过程对整体结构的保持与调整。',
+  },
+  {
+    title: '增强提升',
+    role: '综合反映红外细节与信息量的提升幅度。',
+    paper:
+      '论文在无参考融合评估中引入 Entropy (EN) 等信息量指标；增强提升结合熵增益与梯度能量增益，刻画细节与边缘信息的相对提升。',
+    demo: '数值为相对输入图的百分比增益，越高表示增强后信息量与边缘响应整体越强。',
+  },
+  {
+    title: '处理时间',
+    role: '记录单张红外图从上传到增强完成的算法耗时。',
+    paper:
+      'DEAL 强调数据高效与紧凑网络设计，仅需 50 张清晰红外图训练即可达到高效推理；处理时间体现工程部署中的实时性。',
+    demo: '包含模型推理与指标计算时间，便于评委评估演示系统的响应速度。',
+  },
+];
 
 let progressTimer = null;
 let successTimer = null;
@@ -58,8 +90,16 @@ function resetMessages() {
 function resetMetrics() {
   metrics.psnr = null;
   metrics.ssim = null;
-  metrics.detection = null;
+  metrics.improvement = null;
   metrics.time = null;
+}
+
+function applyMetrics(rawMetrics) {
+  const formatted = formatBackendMetrics(rawMetrics);
+  metrics.psnr = formatted.psnr;
+  metrics.ssim = formatted.ssim;
+  metrics.improvement = formatted.improvement;
+  metrics.time = formatted.time;
 }
 
 function validateFile(file) {
@@ -157,7 +197,7 @@ async function runEnhance() {
       resultFilename.value = result.filename;
       metrics.psnr = result.metrics.psnr;
       metrics.ssim = result.metrics.ssim;
-      metrics.detection = result.metrics.detection;
+      metrics.improvement = result.metrics.improvement;
       metrics.time = result.metrics.time;
     } else {
       await simulateEnhance();
@@ -207,12 +247,7 @@ async function attemptBackend() {
     return {
       resultUrl,
       filename,
-      metrics: {
-        psnr: processData.metrics?.psnr ?? '—',
-        ssim: processData.metrics?.ssim ?? '—',
-        detection: processData.metrics?.detection ?? '—',
-        time: processData.metrics?.time ?? '—',
-      },
+      metrics: formatBackendMetrics(processData.metrics),
     };
   } catch (err) {
     if (err instanceof TypeError) return null;
@@ -234,7 +269,8 @@ function clamp(value) {
 }
 
 async function simulateEnhance() {
-  await new Promise((resolve) => setTimeout(resolve, 1800 + Math.random() * 700));
+  const started = performance.now();
+  await new Promise((resolve) => setTimeout(resolve, 1200));
   const img = await loadImage(previewUrl.value);
   const canvas = document.createElement('canvas');
   canvas.width = img.width;
@@ -242,8 +278,8 @@ async function simulateEnhance() {
   const ctx = canvas.getContext('2d');
   ctx.drawImage(img, 0, 0);
 
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imageData.data;
+  const inputData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = inputData.data;
   const width = canvas.width;
   const height = canvas.height;
 
@@ -274,21 +310,14 @@ async function simulateEnhance() {
     }
   }
 
-  for (let i = 0; i < data.length; i += 4) {
-    const noise = (Math.random() - 0.5) * 8;
-    sharpened[i] = clamp(sharpened[i] + noise);
-    sharpened[i + 1] = clamp(sharpened[i + 1] + noise);
-    sharpened[i + 2] = clamp(sharpened[i + 2] + noise);
-  }
-
   const output = new ImageData(sharpened, width, height);
   ctx.putImageData(output, 0, 0);
 
   resultUrl.value = canvas.toDataURL('image/png');
-  metrics.psnr = (32 + Math.random() * 6).toFixed(2);
-  metrics.ssim = (0.89 + Math.random() * 0.07).toFixed(3);
-  metrics.detection = `${(18 + Math.random() * 15).toFixed(1)}%`;
-  metrics.time = `${(0.3 + Math.random() * 0.8).toFixed(2)}s`;
+  const elapsedSec = (performance.now() - started) / 1000;
+  applyMetrics(
+    evaluateImageDataPair(inputData, output, elapsedSec),
+  );
 }
 
 function downloadResult() {
@@ -410,21 +439,43 @@ onBeforeUnmount(() => {
     <div class="metrics-grid">
       <div class="metrics-card">
         <div class="metrics-value">{{ metrics.psnr ?? '—' }}</div>
-        <div class="metrics-label">PSNR (dB)</div>
+        <div class="metrics-label">峰值信噪比</div>
+        <div class="metrics-sub">PSNR (dB)</div>
       </div>
       <div class="metrics-card">
         <div class="metrics-value">{{ metrics.ssim ?? '—' }}</div>
-        <div class="metrics-label">SSIM</div>
+        <div class="metrics-label">结构相似性</div>
+        <div class="metrics-sub">SSIM</div>
       </div>
       <div class="metrics-card">
-        <div class="metrics-value">{{ metrics.detection ?? '—' }}</div>
+        <div class="metrics-value">{{ metrics.improvement ?? '—' }}</div>
         <div class="metrics-label">增强提升</div>
+        <div class="metrics-sub">相对输入图质量增益</div>
       </div>
       <div class="metrics-card">
         <div class="metrics-value">{{ metrics.time ?? '—' }}</div>
         <div class="metrics-label">处理时间</div>
+        <div class="metrics-sub">算法推理耗时</div>
       </div>
     </div>
+    <p class="metrics-note">上方数值为输入图与增强图的对比结果；完整论文基准测试需使用 Ground Truth 清晰原图。</p>
+
+    <section class="metrics-guide">
+      <h3 class="metrics-guide-title">指标作用说明</h3>
+      <p class="metrics-guide-intro">
+        以下说明参考 CVPR 2025 论文
+        <strong>DEAL: Data-Efficient Adversarial Learning for High-Quality Infrared Imaging</strong>
+        中的评价方式，并结合本 Web 演示的上传场景作简要解读，便于评委老师和用户理解各项指标含义。
+      </p>
+      <div class="metrics-guide-list">
+        <article v-for="item in metricGuides" :key="item.title" class="metrics-guide-item">
+          <h4 class="metrics-guide-item-title">{{ item.title }}</h4>
+          <p class="metrics-guide-line"><span>作用：</span>{{ item.role }}</p>
+          <p class="metrics-guide-line"><span>论文：</span>{{ item.paper }}</p>
+          <p class="metrics-guide-line"><span>演示：</span>{{ item.demo }}</p>
+        </article>
+      </div>
+    </section>
   </section>
 </template>
 
@@ -669,11 +720,95 @@ onBeforeUnmount(() => {
 }
 
 .metrics-label {
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+
+.metrics-sub {
+  font-size: 11px;
   font-weight: 500;
-  text-transform: uppercase;
   color: var(--text-tertiary);
-  margin-top: 4px;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+
+.metrics-note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.metrics-guide {
+  margin-top: 24px;
+  padding: 24px;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+}
+
+.metrics-guide-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.metrics-guide-intro {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.metrics-guide-intro strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.metrics-guide-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.metrics-guide-item {
+  padding: 16px;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.metrics-guide-item-title {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.metrics-guide-line {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+.metrics-guide-line:last-child {
+  margin-bottom: 0;
+}
+
+.metrics-guide-line span {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .metrics-guide-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 .spin {

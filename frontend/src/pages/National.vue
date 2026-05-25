@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { Drone, Radar, ShieldCheck } from 'lucide-vue-next';
+import { Plane, Radar, ShieldCheck } from 'lucide-vue-next';
 import ImageProcessor from '../components/ImageProcessor.vue';
 
 const demoRef = ref(null);
@@ -25,7 +25,7 @@ const cards = [
     description:
       '面向无人机、无人车昼夜红外侦察与导航，提升 SLAM 和检测算法在遮挡烟尘下的可靠度。',
     items: ['轻量化模型支持 ARM/GPU', '时序稳定减少帧间抖动', '与指控系统对接'],
-    icon: Drone,
+    icon: Plane,
   },
 ];
 

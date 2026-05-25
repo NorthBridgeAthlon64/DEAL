@@ -1,4 +1,6 @@
 <script setup>
+import { REPO_URL } from '../../constants/links';
+
 const badges = ['动态对抗退化', '脉冲神经网络', '数据高效学习'];
 </script>
 
@@ -17,14 +19,10 @@ const badges = ['动态对抗退化', '脉冲神经网络', '数据高效学习'
         <span v-for="badge in badges" :key="badge" class="tag">{{ badge }}</span>
       </div>
       <div class="hero-actions">
-        <RouterLink class="btn btn-primary btn-lg" to="/personal">开始使用</RouterLink>
-        <a
-          class="btn btn-secondary btn-lg"
-          href="https://github.com/LiuZhu-CV/DEAL"
-          target="_blank"
-          rel="noreferrer"
-        >
-          阅读论文
+        <RouterLink class="btn btn-secondary btn-lg" to="/paper">阅读论文</RouterLink>
+        <RouterLink class="btn btn-primary btn-lg hero-actions-main" to="/personal">开始使用</RouterLink>
+        <a class="btn btn-secondary btn-lg" :href="REPO_URL" target="_blank" rel="noreferrer">
+          项目源码
         </a>
       </div>
     </div>
@@ -82,16 +80,46 @@ const badges = ['动态对抗退化', '脉冲神经网络', '数据高效学习'
 }
 
 .hero-actions {
-  margin-top: 36px;
-  display: flex;
-  gap: 12px;
+  margin: 36px auto 0;
+  max-width: 640px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+.hero-actions :deep(.btn) {
   justify-content: center;
-  flex-wrap: wrap;
+  text-align: center;
+}
+
+.hero-actions > :first-child {
+  justify-self: end;
+}
+
+.hero-actions-main {
+  justify-self: center;
+}
+
+.hero-actions > :last-child {
+  justify-self: start;
 }
 
 @media (max-width: 768px) {
   .hero-title {
     font-size: clamp(32px, 6vw, 48px);
+  }
+
+  .hero-actions {
+    grid-template-columns: 1fr;
+    max-width: 280px;
+  }
+
+  .hero-actions > :first-child,
+  .hero-actions-main,
+  .hero-actions > :last-child {
+    justify-self: stretch;
+    width: 100%;
   }
 }
 </style>

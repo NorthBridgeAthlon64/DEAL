@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 import warnings
 from pathlib import Path
 
@@ -12,6 +13,8 @@ import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
 from PIL import Image
+
+from metrics import evaluate_pair
 
 warnings.filterwarnings(
     "ignore",
@@ -102,13 +105,18 @@ def _load_and_tensor(ir_path: Path) -> torch.Tensor:
     return x
 
 
-def enhance(ir_path: Path, out_path: Path) -> None:
-    """Run single-image infrared enhancement and save result."""
+def enhance(ir_path: Path, out_path: Path) -> dict:
+    """Run single-image infrared enhancement, save result, return metrics."""
     if _model is None:
         init_model()
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    started = time.perf_counter()
     with torch.no_grad():
         x = _load_and_tensor(ir_path)
         y = _model(x).squeeze(0)
         torchvision.utils.save_image(y, str(out_path), nrow=1)
+    elapsed = time.perf_counter() - started
+
+    metrics = evaluate_pair(ir_path, out_path, elapsed)
+    return {"elapsed_sec": elapsed, "metrics": metrics}

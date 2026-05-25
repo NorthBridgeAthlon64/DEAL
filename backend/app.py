@@ -145,13 +145,14 @@ def process_image():
         result_filename = f"{session_id}_enhanced.png"
         result_path = RESULT_FOLDER / result_filename
 
-        enhance(ir_path, result_path)
+        result = enhance(ir_path, result_path)
         logger.info("Enhanced %s -> %s", ir_path.name, result_filename)
 
         return jsonify(
             {
                 "success": True,
                 "result_filename": result_filename,
+                "metrics": result["metrics"],
                 "message": "红外图像增强完成",
             }
         )
